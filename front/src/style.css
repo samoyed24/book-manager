@@ -1,0 +1,52 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+}
+
+#app {
+  height: 100%;
+}
+
+.center {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+}
+
+.full {
+  height: 100%;
+  width: 100%;
+}
+
+.glass-menu {
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px);
+  border: none !important;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.glass-item {
+  border-radius: 4px;
+}
+
+.glass-item:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+.glass-item.is-active  {
+  background: rgba(255, 255, 255, 0.40) !important;
+}
+
+.glass-sub-item > .el-sub-menu__title:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+}
+
+.small-gray-text {
+  font-size: small;
+  color: gray;
+}

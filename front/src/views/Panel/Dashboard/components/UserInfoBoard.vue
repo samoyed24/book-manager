@@ -1,0 +1,137 @@
+<script setup lang="ts">
+import { useUserAuthStore } from '@/stores/auth'
+import avatar from '@/assets/avatar.png'
+import { ElMessage, ElNotification } from 'element-plus'
+import { SignUpData } from 'types/dashboard'
+import { getUserInfo, postSignUp } from '@/api/dashboard'
+import { APIError } from '@/api/wrapper'
+import { WordsOfWisdom } from '@/util/utils'
+import { UserStoreData } from 'types/api'
+
+export interface UserInfoBoardData {
+    username: string
+    greetings: string
+    registerDay: number
+    signUp: {
+        loading: boolean
+        doneToday: boolean
+        rank?: number
+    },
+    wordOfWisdom?: string
+}
+const userInfoBoardData = ref<UserInfoBoardData>()
+
+const user: UserStoreData = useUserAuthStore().getUser()
+
+const getCurrentHour: () => number = () => {
+    const nowDate = new Date()
+    return nowDate.getHours()
+}
+
+const getGreetings = () => {
+    const hour: number = getCurrentHour()
+    let timeType: string
+    if (hour >= 0 && hour < 6) {
+        timeType = '凌晨好'
+    } else if (hour >= 6 && hour < 12) {
+        timeType = '早上好'
+    } else if (hour == 12) {
+        timeType = '中午好'
+    } else if (hour > 12 && hour < 18) {
+        timeType = '下午好'
+    } else {
+        timeType = '晚上好'
+    }
+    return `${timeType}，${user.username}`
+}
+
+const getUserInfoBoardData = () => {
+    const wordOfWisdom = new WordsOfWisdom()
+    userInfoBoardData.value = {
+        username: user.username,
+        greetings: getGreetings(),
+        registerDay: 7,
+        signUp: {
+            loading: false,
+            doneToday: false,
+            rank: 0,
+        },
+        wordOfWisdom: wordOfWisdom.getRandom(),
+    }
+}
+
+getUserInfoBoardData()
+
+const fetchUserInfo = async () => {
+    try {
+        const { data } = await getUserInfo()
+        if (userInfoBoardData.value) {
+            userInfoBoardData.value.registerDay = data!.registerDay
+            userInfoBoardData.value.signUp.doneToday = data!.signedUpToday
+            userInfoBoardData.value.signUp.rank = data!.signUpRank
+        }
+
+    } catch(err: unknown) {
+        ElNotification.error(`获取用户信息失败: ${(err as APIError).errMsg}`)
+    }
+}
+
+fetchUserInfo()
+
+const fetchSignUp: () => Promise<void>  = async () => {
+    ElNotification.info('正在签到中...')
+    userInfoBoardData.value!.signUp.loading = true
+    try {
+        const { data } = await postSignUp()
+        userInfoBoardData.value!.signUp.doneToday = true
+        userInfoBoardData.value!.signUp.rank = data?.rank
+        ElNotification.success(`签到成功，今日签到排名: ${data?.rank}`)
+    } catch(err: unknown) {
+        const error = err as APIError
+        ElNotification.error(`签到失败: ${error.errMsg}`)
+    } finally {
+        userInfoBoardData.value!.signUp.loading = false
+    }
+}
+
+</script>
+
+<template>
+    <custom-card :header="{ text: getGreetings() }">
+        <div class="avatar-zone center">
+            <el-avatar shape="square" :src="avatar" id="avatar" />
+            {{ user.username }}
+            <div class="small-gray-text">
+                今天是您加入本站的第 {{ userInfoBoardData?.registerDay }} 天
+            </div>
+            <el-button 
+                type="primary" 
+                :style="{ width: '100%', marginTop: '20px' }" 
+                :loading="userInfoBoardData?.signUp.loading"
+                :disabled="userInfoBoardData?.signUp.doneToday" 
+                @click="fetchSignUp"
+            >
+                <span v-if="userInfoBoardData?.signUp.rank">
+                    您已签到，今日签到排名: {{ userInfoBoardData?.signUp.rank }}
+                </span>
+                <span v-else>
+                    签到
+                </span>
+            </el-button>
+        </div>
+        <template #footer v-if="userInfoBoardData?.wordOfWisdom">
+            <span class="small-gray-text">
+                {{ userInfoBoardData.wordOfWisdom }}
+            </span>
+        </template>
+    </custom-card>
+</template>
+
+<style scoped>
+.avatar-zone {
+    flex-direction: column;
+}
+#avatar {
+    margin: 10px;
+}
+</style>

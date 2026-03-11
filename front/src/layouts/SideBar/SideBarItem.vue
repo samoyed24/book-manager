@@ -1,0 +1,30 @@
+<script setup lang="ts">
+import { RouteRecordRaw } from 'vue-router';
+import SideBarItem from './SideBarItem.vue'
+
+interface SideBarItemProps {
+  route: RouteRecordRaw
+  parentPath: string
+}
+
+const props = defineProps<SideBarItemProps>()
+
+</script>
+
+<template>
+    <el-sub-menu v-if="route.children && route.meta?.show" v-permissions="route.meta.requiredPermissions" :index="route.path" class="glass-sub-item">
+        <template #title>
+            <el-icon>
+                <component :is="route.meta.icon"></component>
+            </el-icon>
+            {{ route.meta?.title }}
+        </template>
+        <side-bar-item v-for="children in route.children" :route="children" :parent-path="parentPath + '/' + route.path" />
+    </el-sub-menu>
+    <el-menu-item v-else-if="route.meta?.show" v-permissions="route.meta.requiredPermissions" :key="route.path" :index="parentPath + '/' + route.path" class="glass-item">
+        <el-icon>
+            <component :is="route.meta.icon"></component>
+        </el-icon>
+        {{ route.meta?.title }}
+    </el-menu-item>
+</template>
